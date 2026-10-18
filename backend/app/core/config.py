@@ -1,7 +1,7 @@
 """Application configuration and environment validation using Pydantic Settings."""
 
 import zoneinfo
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -50,6 +50,74 @@ class Settings(BaseSettings):
     approval_expire_seconds: int = Field(
         default=300,
         description="Consequential action approval expiration window in seconds (default 5 min)",
+    )
+
+    # NVIDIA NIM & Model Strategy Settings
+    nvidia_api_key: Optional[str] = Field(
+        default=None,
+        description="NVIDIA NIM API key for live inference",
+    )
+    nvidia_base_url: str = Field(
+        default="https://integrate.api.nvidia.com/v1",
+        description="NVIDIA NIM API base URL",
+    )
+    model_fast_chat: str = Field(
+        default="meta/llama-3.1-8b-instruct",
+        description="Default model for fast chat, greetings, and simple interactions",
+    )
+    model_reasoning: str = Field(
+        default="meta/llama-3.1-70b-instruct",
+        description="Default model for complex multi-step planning and deep reasoning",
+    )
+    model_coding: str = Field(
+        default="meta/llama-3.1-70b-instruct",
+        description="Default model for code analysis, refactoring, and generation",
+    )
+    model_vision: str = Field(
+        default="nvidia/neva-22b",
+        description="Default model for multimodal and image inspection",
+    )
+    model_embedding: str = Field(
+        default="nvidia/nv-embed-v1",
+        description="Default model for semantic text embeddings",
+    )
+    model_timeout_seconds: int = Field(
+        default=30,
+        description="HTTP timeout in seconds for model inference calls",
+    )
+    model_max_retries: int = Field(
+        default=2,
+        description="Maximum exponential backoff retries for failed model calls",
+    )
+    use_mock_models: bool = Field(
+        default=True,
+        description="Whether to use mock provider when live API key is missing or offline",
+    )
+
+    # ElevenLabs & Voice System Settings
+    elevenlabs_api_key: Optional[str] = Field(
+        default=None,
+        description="ElevenLabs API key for live speech synthesis",
+    )
+    elevenlabs_base_url: str = Field(
+        default="https://api.elevenlabs.io/v1",
+        description="ElevenLabs API base URL",
+    )
+    elevenlabs_default_voice_id: str = Field(
+        default="21m00Tcm4TlvDq8ikWAM",
+        description="Default voice ID (Rachel / Neutral Multilingual)",
+    )
+    elevenlabs_model_id: str = Field(
+        default="eleven_multilingual_v2",
+        description="Default ElevenLabs TTS model identifier",
+    )
+    voice_timeout_seconds: int = Field(
+        default=30,
+        description="HTTP timeout in seconds for voice generation",
+    )
+    use_mock_voice: bool = Field(
+        default=True,
+        description="Whether to use mock voice provider when API key is missing or in tests",
     )
 
     # Database Settings

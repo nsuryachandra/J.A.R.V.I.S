@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, Set, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Type
 from pydantic import BaseModel, Field
 
 
@@ -458,6 +458,630 @@ registry.register(
     )
 )
 
+# --- Phase 8 Schemas ---
+
+class BriefingMorningInput(BaseModel):
+    user_id: Optional[str] = None
+
+class BriefingMorningOutput(BaseModel):
+    date: str
+    greeting: str
+    content: str
+    events_count: int
+
+class BriefingEveningInput(BaseModel):
+    user_id: Optional[str] = None
+
+class BriefingEveningOutput(BaseModel):
+    date: str
+    greeting: str
+    content: str
+    completed_count: int
+
+class ProactiveEvaluateInput(BaseModel):
+    user_id: Optional[str] = None
+
+class ProactiveEvaluateOutput(BaseModel):
+    notifications_generated: int
+
+class NotificationsListInput(BaseModel):
+    status: Optional[str] = None
+    limit: int = Field(default=20, ge=1, le=100)
+
+class NotificationsListOutput(BaseModel):
+    count: int
+
+class NotificationsDismissInput(BaseModel):
+    notification_id: str
+
+class NotificationsDismissOutput(BaseModel):
+    notification_id: str
+    status: str
+
+# 16. SAFE tool: Morning Briefing
+registry.register(
+    ToolDefinition(
+        name="briefing.morning",
+        version="1.0.0",
+        description="Generate comprehensive morning briefing with calendar, tasks, and routines",
+        risk_class=RiskClass.SAFE,
+        input_schema=BriefingMorningInput,
+        output_schema=BriefingMorningOutput,
+        requires_approval=False,
+    )
+)
+
+# 17. SAFE tool: Evening Briefing
+registry.register(
+    ToolDefinition(
+        name="briefing.evening",
+        version="1.0.0",
+        description="Generate evening recap with completed work, blockers, and tomorrow's priorities",
+        risk_class=RiskClass.SAFE,
+        input_schema=BriefingEveningInput,
+        output_schema=BriefingEveningOutput,
+        requires_approval=False,
+    )
+)
+
+# 18. MODERATE tool: Proactive Rules Evaluation
+registry.register(
+    ToolDefinition(
+        name="proactive.evaluate",
+        version="1.0.0",
+        description="Evaluate proactive rules, meal check-ins, and deadlines for user",
+        risk_class=RiskClass.MODERATE,
+        input_schema=ProactiveEvaluateInput,
+        output_schema=ProactiveEvaluateOutput,
+        moderate_policy=ModeratePolicy(
+            write_operation=True,
+            sensitive_data_access=False,
+            requires_approval_by_default=False,
+        ),
+        requires_approval=False,
+    )
+)
+
+# 19. SAFE tool: List Proactive Notifications
+registry.register(
+    ToolDefinition(
+        name="notifications.list",
+        version="1.0.0",
+        description="List proactive notifications, check-ins, and briefings",
+        risk_class=RiskClass.SAFE,
+        input_schema=NotificationsListInput,
+        output_schema=NotificationsListOutput,
+        requires_approval=False,
+    )
+)
+
+# 20. MODERATE tool: Dismiss Notification
+registry.register(
+    ToolDefinition(
+        name="notifications.dismiss",
+        version="1.0.0",
+        description="Dismiss or acknowledge a proactive notification",
+        risk_class=RiskClass.MODERATE,
+        input_schema=NotificationsDismissInput,
+        output_schema=NotificationsDismissOutput,
+        moderate_policy=ModeratePolicy(
+            write_operation=True,
+            sensitive_data_access=False,
+            requires_approval_by_default=False,
+        ),
+        requires_approval=False,
+    )
+)
+
+# --- Phase 9 Schemas ---
+
+class ModelRouteInput(BaseModel):
+    query: str = Field(min_length=1)
+
+class ModelRouteOutput(BaseModel):
+    role: str
+    model: str
+    provider: str
+
+class ModelUsageInput(BaseModel):
+    user_id: Optional[str] = None
+
+class ModelUsageOutput(BaseModel):
+    total_calls: int
+    total_tokens: int
+    prompt_tokens: int
+    completion_tokens: int
+    avg_latency_ms: float
+
+# 21. SAFE tool: Route Query to Model
+registry.register(
+    ToolDefinition(
+        name="model.route",
+        version="1.0.0",
+        description="Determine appropriate model role and specific model ID for a user request",
+        risk_class=RiskClass.SAFE,
+        input_schema=ModelRouteInput,
+        output_schema=ModelRouteOutput,
+        requires_approval=False,
+    )
+)
+
+# 22. SAFE tool: Get Token Usage
+registry.register(
+    ToolDefinition(
+        name="model.usage",
+        version="1.0.0",
+        description="Retrieve token consumption and latency metrics for current user",
+        risk_class=RiskClass.SAFE,
+        input_schema=ModelUsageInput,
+        output_schema=ModelUsageOutput,
+        requires_approval=False,
+    )
+)
+
+# --- Phase 10 Schemas: Voice Integration ---
+
+class VoiceSynthesizeInput(BaseModel):
+    text: str = Field(min_length=1, max_length=5000)
+    profile_id: Optional[str] = None
+    speed: Optional[float] = None
+    format: str = "mp3"
+
+class VoiceSynthesizeOutput(BaseModel):
+    character_count: int
+    duration_seconds: float
+    profile_id: str
+    provider: str
+
+class VoicePreferencesInput(BaseModel):
+    selected_profile_id: Optional[str] = None
+    speed: Optional[float] = None
+    stability: Optional[float] = None
+    voice_enabled: Optional[bool] = None
+    privacy_mode: Optional[bool] = None
+
+class VoicePreferencesOutput(BaseModel):
+    selected_profile_id: str
+    speed: float
+    voice_enabled: bool
+    privacy_mode: bool
+
+class VoicePreferencesGetInput(BaseModel):
+    user_id: Optional[str] = None
+
+# 23. SAFE tool: Voice Synthesize
+registry.register(
+    ToolDefinition(
+        name="voice.synthesize",
+        version="1.0.0",
+        description="Synthesize text to speech using preferred voice profile",
+        risk_class=RiskClass.SAFE,
+        input_schema=VoiceSynthesizeInput,
+        output_schema=VoiceSynthesizeOutput,
+        requires_approval=False,
+    )
+)
+
+# 24. SAFE tool: Get Voice Preferences
+registry.register(
+    ToolDefinition(
+        name="voice.get_preferences",
+        version="1.0.0",
+        description="Retrieve current user's voice preferences and selected profile",
+        risk_class=RiskClass.SAFE,
+        input_schema=VoicePreferencesGetInput,
+        output_schema=VoicePreferencesOutput,
+        requires_approval=False,
+    )
+)
+
+# 25. MODERATE tool: Update Voice Preferences
+registry.register(
+    ToolDefinition(
+        name="voice.update_preferences",
+        version="1.0.0",
+        description="Update user's voice profile, speed, and privacy preferences",
+        risk_class=RiskClass.MODERATE,
+        input_schema=VoicePreferencesInput,
+        output_schema=VoicePreferencesOutput,
+        moderate_policy=ModeratePolicy(
+            write_operation=True,
+            sensitive_data_access=False,
+            requires_approval_by_default=False,
+        ),
+        requires_approval=False,
+    )
+)
+
+# --- Phase 12 Schemas: Research & Writing Agents ---
+
+class ResearchSearchToolInput(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    max_results: int = 5
+
+class ResearchSearchToolOutput(BaseModel):
+    total_results: int
+    results: List[Dict[str, Any]]
+
+class ResearchExecuteToolInput(BaseModel):
+    topic: str = Field(min_length=1, max_length=255)
+    query: str = Field(min_length=1, max_length=1000)
+
+class ResearchExecuteToolOutput(BaseModel):
+    session_id: str
+    topic: str
+    findings_count: int
+    has_conflicts: bool
+
+class DocumentDraftToolInput(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    doc_type: str = "BRIEF"
+    instructions: Optional[str] = None
+
+class DocumentDraftToolOutput(BaseModel):
+    document_id: str
+    title: str
+    word_count: int
+
+# 26. SAFE tool: Research Web Search
+registry.register(
+    ToolDefinition(
+        name="research.search",
+        version="1.0.0",
+        description="Query and rank approved multi-source research information",
+        risk_class=RiskClass.SAFE,
+        input_schema=ResearchSearchToolInput,
+        output_schema=ResearchSearchToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 27. SAFE tool: Execute Multi-Source Research
+registry.register(
+    ToolDefinition(
+        name="research.execute",
+        version="1.0.0",
+        description="Execute full research pipeline with fact extraction and conflict detection",
+        risk_class=RiskClass.SAFE,
+        input_schema=ResearchExecuteToolInput,
+        output_schema=ResearchExecuteToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 28. SAFE tool: Draft Document
+registry.register(
+    ToolDefinition(
+        name="document.draft",
+        version="1.0.0",
+        description="Draft structured document grounded in research findings and citations",
+        risk_class=RiskClass.SAFE,
+        input_schema=DocumentDraftToolInput,
+        output_schema=DocumentDraftToolOutput,
+        requires_approval=False,
+    )
+)
+
+# --- Phase 13 Schemas: Coding Agent ---
+
+class CodeInspectToolInput(BaseModel):
+    workspace_path: Optional[str] = None
+    relative_file_path: Optional[str] = None
+    max_depth: int = 3
+    include_symbols: bool = False
+
+class CodeInspectToolOutput(BaseModel):
+    workspace_path: str
+    total_files: int
+    summary: str
+
+class CodeProposeChangeToolInput(BaseModel):
+    session_id: str
+    target_file: str
+    title: str
+    description: str
+    proposed_content: str
+
+class CodeProposeChangeToolOutput(BaseModel):
+    proposal_id: str
+    target_file: str
+    diff_content: str
+    status: str
+
+class CodeApplyChangeToolInput(BaseModel):
+    proposal_id: str
+    target_file: str
+    dry_run: bool = False
+
+class CodeApplyChangeToolOutput(BaseModel):
+    proposal_id: str
+    status: str
+    applied: bool
+    message: str
+
+class CodeRunTestsToolInput(BaseModel):
+    workspace_path: Optional[str] = None
+    test_target: Optional[str] = None
+    timeout_seconds: int = 15
+
+class CodeRunTestsToolOutput(BaseModel):
+    command: str
+    exit_code: int
+    passed: bool
+    total_tests: int = 0
+    passed_count: int = 0
+    failed_count: int = 0
+
+# 29. SAFE tool: Code Inspection
+registry.register(
+    ToolDefinition(
+        name="code.inspect",
+        version="1.0.0",
+        description="Inspect codebase structure, AST symbols, and syntax validity",
+        risk_class=RiskClass.SAFE,
+        input_schema=CodeInspectToolInput,
+        output_schema=CodeInspectToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 30. SAFE tool: Propose Code Change
+registry.register(
+    ToolDefinition(
+        name="code.propose_change",
+        version="1.0.0",
+        description="Draft code refactoring change proposal with unified git diff",
+        risk_class=RiskClass.SAFE,
+        input_schema=CodeProposeChangeToolInput,
+        output_schema=CodeProposeChangeToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 31. CONSEQUENTIAL tool: Apply Code Change
+registry.register(
+    ToolDefinition(
+        name="code.apply_change",
+        version="1.0.0",
+        description="Apply approved code refactoring diff directly to target workspace",
+        risk_class=RiskClass.CONSEQUENTIAL,
+        input_schema=CodeApplyChangeToolInput,
+        output_schema=CodeApplyChangeToolOutput,
+        requires_approval=True,
+    )
+)
+
+# 32. SAFE tool: Run Sandboxed Tests
+registry.register(
+    ToolDefinition(
+        name="code.run_tests",
+        version="1.0.0",
+        description="Execute pytest suite inside isolated sandbox with strict resource bounds",
+        risk_class=RiskClass.SAFE,
+        input_schema=CodeRunTestsToolInput,
+        output_schema=CodeRunTestsToolOutput,
+        requires_approval=False,
+    )
+)
+
+# --- Phase 14 Schemas: Browser & Computer Agent ---
+
+class BrowserNavigateToolInput(BaseModel):
+    session_id: str
+    url: str
+
+class BrowserNavigateToolOutput(BaseModel):
+    session_id: str
+    url: str
+    title: str
+    status: str
+
+class BrowserReadPageToolInput(BaseModel):
+    session_id: str
+
+class BrowserReadPageToolOutput(BaseModel):
+    session_id: str
+    url: str
+    title: str
+    content: str
+    elements_count: int
+
+class BrowserFillFormToolInput(BaseModel):
+    session_id: str
+    selector: str
+    value: str
+
+class BrowserFillFormToolOutput(BaseModel):
+    session_id: str
+    selector: str
+    success: bool
+
+class BrowserScreenshotToolInput(BaseModel):
+    session_id: str
+    caption: Optional[str] = None
+
+class BrowserScreenshotToolOutput(BaseModel):
+    screenshot_id: str
+    url: str
+    width: int
+    height: int
+
+class BrowserSubmitFormToolInput(BaseModel):
+    session_id: str
+    selector: str
+    form_data: Optional[Dict[str, Any]] = None
+
+class BrowserSubmitFormToolOutput(BaseModel):
+    session_id: str
+    selector: str
+    status: str
+    new_url: Optional[str] = None
+
+# 33. SAFE tool: Browser Navigate
+registry.register(
+    ToolDefinition(
+        name="browser.navigate",
+        version="1.0.0",
+        description="Navigate headless browser session to target URL within SSRF-guarded sandbox",
+        risk_class=RiskClass.SAFE,
+        input_schema=BrowserNavigateToolInput,
+        output_schema=BrowserNavigateToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 34. SAFE tool: Browser Read Page
+registry.register(
+    ToolDefinition(
+        name="browser.read_page",
+        version="1.0.0",
+        description="Extract structured DOM content and interactive elements wrapped in untrusted boundaries",
+        risk_class=RiskClass.SAFE,
+        input_schema=BrowserReadPageToolInput,
+        output_schema=BrowserReadPageToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 35. SAFE tool: Browser Fill Form
+registry.register(
+    ToolDefinition(
+        name="browser.fill_form",
+        version="1.0.0",
+        description="Fill interactive form input fields with specified value",
+        risk_class=RiskClass.SAFE,
+        input_schema=BrowserFillFormToolInput,
+        output_schema=BrowserFillFormToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 36. SAFE tool: Browser Screenshot
+registry.register(
+    ToolDefinition(
+        name="browser.screenshot",
+        version="1.0.0",
+        description="Capture visual base64 PNG screenshot for human review and auditing",
+        risk_class=RiskClass.SAFE,
+        input_schema=BrowserScreenshotToolInput,
+        output_schema=BrowserScreenshotToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 37. CONSEQUENTIAL tool: Browser Submit Form
+registry.register(
+    ToolDefinition(
+        name="browser.submit_form",
+        version="1.0.0",
+        description="Submit interactive form or trigger consequential web action with mandatory human approval",
+        risk_class=RiskClass.CONSEQUENTIAL,
+        input_schema=BrowserSubmitFormToolInput,
+        output_schema=BrowserSubmitFormToolOutput,
+        requires_approval=True,
+    )
+)
+
+# --- Phase 15 Schemas: Vision, Camera, & Screen ---
+
+class VisionAnalyzeImageToolInput(BaseModel):
+    image_base64: str
+    prompt: Optional[str] = "Describe this image and identify all notable visual elements."
+
+class VisionAnalyzeImageToolOutput(BaseModel):
+    analysis_result: str
+    detected_objects: List[str] = Field(default_factory=list)
+    model_used: str
+
+class VisionCaptureScreenFrameToolInput(BaseModel):
+    session_id: str
+    prompt: Optional[str] = "Analyze active screen frame content and visible UI."
+
+class VisionCaptureScreenFrameToolOutput(BaseModel):
+    frame_id: str
+    analysis_result: str
+    detected_objects: List[str] = Field(default_factory=list)
+
+class VisionCameraToggleToolInput(BaseModel):
+    session_id: str
+    action: str = Field(description="'MUTE', 'UNMUTE', or 'STOP'")
+
+class VisionCameraToggleToolOutput(BaseModel):
+    session_id: str
+    status: str
+    privacy_indicator: bool
+    message: str
+
+class VisionOcrExtractToolInput(BaseModel):
+    image_base64: str
+
+class VisionOcrExtractToolOutput(BaseModel):
+    ocr_text: str
+    extracted_lines: int
+
+# 38. SAFE tool: Vision Analyze Image
+registry.register(
+    ToolDefinition(
+        name="vision.analyze_image",
+        version="1.0.0",
+        description="Multimodal image inspection, visual Q&A, and scene description",
+        risk_class=RiskClass.SAFE,
+        input_schema=VisionAnalyzeImageToolInput,
+        output_schema=VisionAnalyzeImageToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 39. MODERATE tool: Vision Capture Screen Frame
+registry.register(
+    ToolDefinition(
+        name="vision.capture_screen_frame",
+        version="1.0.0",
+        description="Capture and analyze active screen frame with explicit user consent",
+        risk_class=RiskClass.MODERATE,
+        input_schema=VisionCaptureScreenFrameToolInput,
+        output_schema=VisionCaptureScreenFrameToolOutput,
+        moderate_policy=ModeratePolicy(
+            requires_approval_by_default=False,
+            requires_user_capability="screen_capture",
+            sensitive_data_access=True,
+            write_operation=False,
+        ),
+        requires_approval=False,
+    )
+)
+
+# 40. MODERATE tool: Vision Camera Toggle
+registry.register(
+    ToolDefinition(
+        name="vision.camera_toggle",
+        version="1.0.0",
+        description="Toggle camera stream capture state and update privacy indicator",
+        risk_class=RiskClass.MODERATE,
+        input_schema=VisionCameraToggleToolInput,
+        output_schema=VisionCameraToggleToolOutput,
+        moderate_policy=ModeratePolicy(
+            requires_approval_by_default=False,
+            requires_user_capability="camera_stream",
+            sensitive_data_access=False,
+            write_operation=True,
+        ),
+        requires_approval=False,
+    )
+)
+
+# 41. SAFE tool: Vision OCR Extract
+registry.register(
+    ToolDefinition(
+        name="vision.ocr_extract",
+        version="1.0.0",
+        description="Extract structured text, receipts, tables, and document content via OCR",
+        risk_class=RiskClass.SAFE,
+        input_schema=VisionOcrExtractToolInput,
+        output_schema=VisionOcrExtractToolOutput,
+        requires_approval=False,
+    )
+)
 
 
 def get_tool_registry() -> ToolRegistry:

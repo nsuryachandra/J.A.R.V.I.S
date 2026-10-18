@@ -183,6 +183,7 @@ class ApprovalService:
             )
             .values(status="CONSUMED", consumed_at=now)
             .returning(ApprovalRequest.id)
+            .execution_options(synchronize_session="fetch")
         )
 
         result = await session.execute(stmt)
