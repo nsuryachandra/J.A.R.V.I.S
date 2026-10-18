@@ -51,26 +51,42 @@ class Settings(BaseSettings):
         default=300,
         description="Consequential action approval expiration window in seconds (default 5 min)",
     )
+    cron_secret: str = Field(
+        default="dev-cron-secret-key-123",
+        description="Shared secret key authorizing Render Cron webhook triggers",
+    )
 
     # NVIDIA NIM & Model Strategy Settings
     nvidia_api_key: Optional[str] = Field(
         default=None,
         description="NVIDIA NIM API key for live inference",
     )
+    groq_api_key: Optional[str] = Field(
+        default=None,
+        description="Optional Groq API key for ultra-fast Llama-3.1 live inference",
+    )
+    grok_api_key: Optional[str] = Field(
+        default=None,
+        description="Optional xAI Grok API key for live inference",
+    )
+    openai_api_key: Optional[str] = Field(
+        default=None,
+        description="Optional OpenAI / OpenRouter API key for live inference",
+    )
     nvidia_base_url: str = Field(
         default="https://integrate.api.nvidia.com/v1",
-        description="NVIDIA NIM API base URL",
+        description="NVIDIA NIM or OpenAI-compatible API base URL",
     )
     model_fast_chat: str = Field(
-        default="meta/llama-3.1-8b-instruct",
+        default="qwen/qwen3.8-27b",
         description="Default model for fast chat, greetings, and simple interactions",
     )
     model_reasoning: str = Field(
-        default="meta/llama-3.1-70b-instruct",
+        default="openai/gpt-oss-120b",
         description="Default model for complex multi-step planning and deep reasoning",
     )
     model_coding: str = Field(
-        default="meta/llama-3.1-70b-instruct",
+        default="openai/gpt-oss-20b",
         description="Default model for code analysis, refactoring, and generation",
     )
     model_vision: str = Field(
@@ -90,7 +106,7 @@ class Settings(BaseSettings):
         description="Maximum exponential backoff retries for failed model calls",
     )
     use_mock_models: bool = Field(
-        default=True,
+        default=False,
         description="Whether to use mock provider when live API key is missing or offline",
     )
 
@@ -116,8 +132,8 @@ class Settings(BaseSettings):
         description="HTTP timeout in seconds for voice generation",
     )
     use_mock_voice: bool = Field(
-        default=True,
-        description="Whether to use mock voice provider when API key is missing or in tests",
+        default=False,
+        description="Whether to force offline mock voice provider",
     )
 
     # Database Settings

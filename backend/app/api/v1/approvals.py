@@ -52,6 +52,45 @@ async def list_approvals(
     ]
 
 
+@router.get("/pending", response_model=List[ApprovalResponse])
+async def list_pending_approvals(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> List[ApprovalResponse]:
+    """List pending approval requests requiring human decision."""
+    stmt = (
+        select(ApprovalRequest)
+        .where(
+            ApprovalRequest.user_id == current_user.id,
+            ApprovalRequest.status == "PENDING",
+        )
+        .order_by(ApprovalRequest.requested_at.desc())
+    )
+    res = await db.execute(stmt)
+    approvals = res.scalars().all()
+
+    return [
+        ApprovalResponse(
+            id=a.id,
+            tool_name=a.tool_name,
+            tool_version=a.tool_version,
+            normalized_arguments=a.normalized_arguments,
+            arguments_hash=a.arguments_hash,
+            target_resource=a.target_resource,
+            risk_class=a.risk_class,
+            status=a.status,
+            requested_at=a.requested_at,
+            expires_at=a.expires_at,
+            approved_at=a.approved_at,
+            consumed_at=a.consumed_at,
+            denied_at=a.denied_at,
+            revoked_at=a.revoked_at,
+            approval_method=a.approval_method,
+        )
+        for a in approvals
+    ]
+
+
 @router.get("/{approval_id}", response_model=ApprovalResponse)
 async def get_approval(
     approval_id: UUID,

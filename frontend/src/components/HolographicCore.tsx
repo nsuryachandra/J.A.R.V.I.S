@@ -1,4 +1,5 @@
 import React from 'react';
+import { soundFx } from '../services/sound';
 
 interface HolographicCoreProps {
   status: 'IDLE' | 'PROCESSING' | 'SPEAKING' | 'ALERT';
@@ -26,161 +27,229 @@ export const HolographicCore: React.FC<HolographicCoreProps> = ({
 
   const color = getStatusColor();
 
+  const handleClick = () => {
+    soundFx.playReactorHum();
+    onClick?.();
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       style={{
         position: 'relative',
-        width: '320px',
-        height: '320px',
+        width: '340px',
+        height: '340px',
         margin: '0 auto',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
+        userSelect: 'none',
+        transform: `scale(${pulseIntensity})`,
+        transition: 'transform 0.3s ease',
       }}
-      title="Click to interact with JARVIS Core"
+      title="STARK ARC REACTOR // Click to initialize diagnostic pulse"
     >
-      {/* Outer Ring with Coordinate Ticks */}
-      <svg
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          animation: `spinClockwise ${status === 'PROCESSING' ? '6s' : '24s'} linear infinite`,
-        }}
-        viewBox="0 0 320 320"
-      >
-        <circle
-          cx="160"
-          cy="160"
-          r="150"
-          fill="none"
-          stroke={color}
-          strokeWidth="1.5"
-          strokeDasharray="4 8 16 8"
-          opacity="0.4"
-        />
-        <circle
-          cx="160"
-          cy="160"
-          r="138"
-          fill="none"
-          stroke={color}
-          strokeWidth="1"
-          strokeDasharray="60 30 15 30"
-          opacity="0.6"
-        />
-        {/* Cardinal North/South/East/West markers */}
-        <line x1="160" y1="5" x2="160" y2="15" stroke={color} strokeWidth="2" opacity="0.8" />
-        <line x1="160" y1="305" x2="160" y2="315" stroke={color} strokeWidth="2" opacity="0.8" />
-        <line x1="5" y1="160" x2="15" y2="160" stroke={color} strokeWidth="2" opacity="0.8" />
-        <line x1="305" y1="160" x2="315" y2="160" stroke={color} strokeWidth="2" opacity="0.8" />
-      </svg>
-
-      {/* Middle Counter-Rotating Segmented Ring */}
-      <svg
-        style={{
-          position: 'absolute',
-          width: '260px',
-          height: '260px',
-          animation: `spinCounterClockwise ${status === 'PROCESSING' ? '4s' : '16s'} linear infinite`,
-        }}
-        viewBox="0 0 260 260"
-      >
-        <circle
-          cx="130"
-          cy="130"
-          r="115"
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-          strokeDasharray="90 40 20 40"
-          opacity="0.75"
-        />
-        <circle
-          cx="130"
-          cy="130"
-          r="95"
-          fill="none"
-          stroke={color}
-          strokeWidth="1.5"
-          strokeDasharray="6 6"
-          opacity="0.5"
-        />
-      </svg>
-
-      {/* Inner Fast Orbiting Gyro Ring */}
-      <svg
-        style={{
-          position: 'absolute',
-          width: '180px',
-          height: '180px',
-          animation: `spinClockwise ${status === 'SPEAKING' ? '3s' : '10s'} linear infinite`,
-        }}
-        viewBox="0 0 180 180"
-      >
-        <polygon
-          points="90,15 165,90 90,165 15,90"
-          fill="none"
-          stroke={color}
-          strokeWidth="1.5"
-          strokeDasharray="10 5"
-          opacity="0.55"
-        />
-        <circle
-          cx="90"
-          cy="90"
-          r="65"
-          fill="none"
-          stroke={color}
-          strokeWidth="2.5"
-          strokeDasharray="40 20"
-          opacity="0.8"
-        />
-      </svg>
-
-      {/* Central Arc Reactor Glowing Nucleus */}
-      <div
-        style={{
-          width: '84px',
-          height: '84px',
-          borderRadius: '50%',
-          background: `radial-gradient(circle, #ffffff 0%, ${color} 55%, transparent 95%)`,
-          boxShadow: `0 0 ${40 * pulseIntensity}px ${color}, inset 0 0 20px #ffffff`,
-          animation: 'pulseGlow 2.5s ease-in-out infinite',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '0.65rem',
-            fontWeight: 800,
-            color: '#020617',
-            letterSpacing: '0.12em',
-          }}
-        >
-          {status}
-        </span>
-      </div>
-
-      {/* Ambient Pulsing Glow Halo */}
+      {/* Background Radial Glow */}
       <div
         style={{
           position: 'absolute',
           width: '280px',
           height: '280px',
           borderRadius: '50%',
-          background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
-          opacity: 0.15 * pulseIntensity,
-          pointerEvents: 'none',
+          background: `radial-gradient(circle, ${color}25 0%, ${color}08 45%, transparent 70%)`,
+          filter: 'blur(20px)',
+          transition: 'background 0.5s ease',
         }}
       />
+
+      {/* Outer Ring 1: Radar Compass & Degree Markings */}
+      <svg
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          animation: `spinClockwise ${status === 'PROCESSING' ? '6s' : '40s'} linear infinite`,
+        }}
+        viewBox="0 0 340 340"
+      >
+        <circle
+          cx="170"
+          cy="170"
+          r="162"
+          fill="none"
+          stroke={color}
+          strokeWidth="1"
+          strokeDasharray="4 8 20 8 4 16"
+          opacity="0.35"
+        />
+        <circle
+          cx="170"
+          cy="170"
+          r="154"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.5"
+          strokeDasharray="80 20 10 20"
+          opacity="0.5"
+        />
+        {/* Calipers and Cardinal ticks */}
+        <line x1="170" y1="4" x2="170" y2="16" stroke={color} strokeWidth="2" opacity="0.9" />
+        <line x1="170" y1="324" x2="170" y2="336" stroke={color} strokeWidth="2" opacity="0.9" />
+        <line x1="4" y1="170" x2="16" y2="170" stroke={color} strokeWidth="2" opacity="0.9" />
+        <line x1="324" y1="170" x2="336" y2="170" stroke={color} strokeWidth="2" opacity="0.9" />
+      </svg>
+
+      {/* Middle Ring 2: Counter-Rotating Mechanical Segment Brackets */}
+      <svg
+        style={{
+          position: 'absolute',
+          width: '280px',
+          height: '280px',
+          animation: `spinCounterClockwise ${status === 'PROCESSING' ? '4s' : '22s'} linear infinite`,
+        }}
+        viewBox="0 0 280 280"
+      >
+        <circle
+          cx="140"
+          cy="140"
+          r="128"
+          fill="none"
+          stroke={color}
+          strokeWidth="2.5"
+          strokeDasharray="90 30 15 30"
+          opacity="0.7"
+        />
+        <circle
+          cx="140"
+          cy="140"
+          r="118"
+          fill="none"
+          stroke={color}
+          strokeWidth="1"
+          strokeDasharray="4 6"
+          opacity="0.4"
+        />
+      </svg>
+
+      {/* Ring 3: Fast Inner Data Wheel */}
+      <svg
+        style={{
+          position: 'absolute',
+          width: '220px',
+          height: '220px',
+          animation: `spinClockwise ${status === 'PROCESSING' ? '3s' : '14s'} linear infinite`,
+        }}
+        viewBox="0 0 220 220"
+      >
+        <circle
+          cx="110"
+          cy="110"
+          r="98"
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeDasharray="30 15 60 15"
+          opacity="0.8"
+        />
+        {/* Radial Spokes */}
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+          <line
+            key={angle}
+            x1="110"
+            y1="22"
+            x2="110"
+            y2="32"
+            stroke={color}
+            strokeWidth="1.5"
+            opacity="0.6"
+            transform={`rotate(${angle} 110 110)`}
+          />
+        ))}
+      </svg>
+
+      {/* Pulsating Reactor Core */}
+      <div
+        style={{
+          position: 'relative',
+          width: '130px',
+          height: '130px',
+          borderRadius: '50%',
+          background: `radial-gradient(circle at 40% 40%, #ffffff 0%, ${color} 40%, rgba(3, 15, 38, 0.95) 90%)`,
+          boxShadow: `0 0 30px ${color}80, 0 0 60px ${color}40, inset 0 0 20px #ffffff90`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation:
+            status === 'SPEAKING'
+              ? 'holoPulse 1s ease-in-out infinite'
+              : status === 'PROCESSING'
+              ? 'holoPulse 0.6s ease-in-out infinite'
+              : 'holoPulse 3s ease-in-out infinite',
+          border: `2px solid ${color}`,
+        }}
+      >
+        {/* Arc Core Triangular Geometry (Stark Mk VII style) */}
+        <div
+          style={{
+            position: 'absolute',
+            width: '84px',
+            height: '84px',
+            border: `1.5px solid rgba(255, 255, 255, 0.6)`,
+            transform: 'rotate(45deg)',
+            boxShadow: `0 0 10px ${color}`,
+            borderRadius: '4px',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <span
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            fontFamily: 'var(--font-display)',
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            letterSpacing: '0.14em',
+            color: '#030712',
+            textShadow: '0 0 8px rgba(255, 255, 255, 0.9)',
+          }}
+        >
+          {status}
+        </span>
+        <span
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.62rem',
+            fontWeight: 600,
+            color: '#04172f',
+            letterSpacing: '0.08em',
+          }}
+        >
+          MK-VII CORE
+        </span>
+      </div>
+
+      {/* Orbital Telemetry Float Points */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '12px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.65rem',
+          color: color,
+          letterSpacing: '0.12em',
+          opacity: 0.85,
+          textShadow: `0 0 6px ${color}`,
+        }}
+      >
+        SYS // 98.4% FLUX
+      </div>
     </div>
   );
 };

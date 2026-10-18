@@ -139,7 +139,7 @@ class JarvisAPIClient {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const token = await this.ensureAuthenticated();
+    let token = await this.ensureAuthenticated();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
@@ -149,10 +149,24 @@ class JarvisAPIClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`${this.baseUrl}${endpoint}`, {
+    let res = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers,
     });
+
+    // If 401 Unauthorized, token may be expired or invalid in localStorage: clear and retry once
+    if (res.status === 401) {
+      this.token = null;
+      localStorage.removeItem('jarvis_auth_token');
+      token = await this.ensureAuthenticated();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        res = await fetch(`${this.baseUrl}${endpoint}`, {
+          ...options,
+          headers,
+        });
+      }
+    }
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -163,10 +177,14 @@ class JarvisAPIClient {
   }
 
   // Models
-  public async sendChat(messages: LLMMessage[], role: string = 'fast_chat'): Promise<ChatResponse> {
+  public async sendChat(messages: LLMMessage[], role?: string): Promise<ChatResponse> {
+    const payload: { messages: LLMMessage[]; role?: string } = { messages };
+    if (role && role !== 'auto') {
+      payload.role = role;
+    }
     return this.request<ChatResponse>('/models/chat', {
       method: 'POST',
-      body: JSON.stringify({ messages, role }),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -212,6 +230,56 @@ class JarvisAPIClient {
       body: JSON.stringify({ decision, reason }),
     });
   }
+
+  // System Telemetry & Desktop Automation
+  public async getSystemStatus(): Promise<SystemStatus> {
+    return this.request<SystemStatus>('/system/status');
+  }
+
+  public async executeSystemAction(action: string, param?: string): Promise<{ success: boolean; action: string; result: any }> {
+    return this.request('/system/action', {
+      method: 'POST',
+      body: JSON.stringify({ action, param }),
+    });
+  }
+
+  public async getLiveTelemetry(): Promise<any> {
+    return this.request('/system/telemetry');
+  }
+
+  public async inspectScreenImage(image_base64: string, prompt?: string): Promise<{ success: boolean; analysis: string }> {
+    return this.request('/system/screen/inspect', {
+      method: 'POST',
+      body: JSON.stringify({ image_base64, prompt }),
+    });
+  }
+
+  public async updateSystemKeys(keys: {
+    elevenlabs_api_key?: string;
+    nvidia_api_key?: string;
+    grok_api_key?: string;
+    groq_api_key?: string;
+    openai_api_key?: string;
+  }): Promise<{ success: boolean; message: string; elevenlabs_valid?: boolean; ai_valid?: boolean; status: SystemStatus }> {
+    return this.request('/system/keys', {
+      method: 'POST',
+      body: JSON.stringify(keys),
+    });
+  }
+}
+
+export interface SystemStatus {
+  status: string;
+  ai_provider: string;
+  ai_configured: boolean;
+  voice_provider: string;
+  voice_configured: boolean;
+  elevenlabs_configured: boolean;
+  nvidia_configured: boolean;
+  groq_configured: boolean;
+  grok_configured: boolean;
+  openai_configured: boolean;
+  active_profile_id: string;
 }
 
 export const api = new JarvisAPIClient();

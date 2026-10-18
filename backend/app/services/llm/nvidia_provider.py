@@ -30,14 +30,33 @@ class NvidiaNIMProvider(BaseLLMProvider):
         max_retries: Optional[int] = None,
     ):
         settings = get_settings()
-        self._api_key = api_key or settings.nvidia_api_key
-        self._base_url = (base_url or settings.nvidia_base_url).rstrip("/")
+        self._api_key = (
+            api_key
+            or settings.grok_api_key
+            or settings.groq_api_key
+            or settings.nvidia_api_key
+            or settings.openai_api_key
+        )
+        custom_base = base_url or settings.nvidia_base_url
+        if self._api_key and self._api_key.startswith("xai-") and "api.nvidia.com" in custom_base:
+            self._base_url = "https://api.x.ai/v1"
+            self._provider_type = "grok"
+        elif self._api_key and self._api_key.startswith("gsk_") and "api.nvidia.com" in custom_base:
+            self._base_url = "https://api.groq.com/openai/v1"
+            self._provider_type = "groq"
+        elif self._api_key and self._api_key.startswith("sk-") and "api.nvidia.com" in custom_base:
+            self._base_url = "https://api.openai.com/v1"
+            self._provider_type = "openai"
+        else:
+            self._base_url = custom_base.rstrip("/")
+            self._provider_type = "nvidia"
+
         self._timeout = timeout or settings.model_timeout_seconds
         self._max_retries = max_retries if max_retries is not None else settings.model_max_retries
 
     @property
     def provider_name(self) -> str:
-        return "nvidia"
+        return self._provider_type if hasattr(self, "_provider_type") else "nvidia"
 
     @property
     def is_configured(self) -> bool:
@@ -46,12 +65,35 @@ class NvidiaNIMProvider(BaseLLMProvider):
 
     def _get_headers(self) -> Dict[str, str]:
         if not self._api_key:
-            raise ValidationError("NVIDIA NIM API key is not configured.")
+            raise ValidationError("Inference API key is not configured.")
         return {
             "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
+
+    def _map_model_for_provider(self, model: str) -> str:
+        """Translate model identifiers to provider-specific equivalents if needed."""
+        provider = getattr(self, "_provider_type", "nvidia")
+        if provider == "grok":
+            if "vision" in model.lower():
+                return "grok-2-vision-1212"
+            return "grok-2-latest"
+        elif provider == "groq":
+            if model in ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"):
+                return model
+            if any(k in model.lower() for k in ["reasoning", "120b", "70b"]):
+                return "openai/gpt-oss-120b"
+            elif any(k in model.lower() for k in ["code", "coding", "20b"]):
+                return "openai/gpt-oss-20b"
+            return "qwen/qwen3.8-27b"
+        elif provider == "openai":
+            if "8b" in model.lower() or "fast" in model.lower():
+                return "gpt-4o-mini"
+            elif "70b" in model.lower() or "120b" in model.lower():
+                return "gpt-4o"
+            return "gpt-4o-mini"
+        return model
 
     async def generate(
         self,
@@ -61,11 +103,12 @@ class NvidiaNIMProvider(BaseLLMProvider):
         max_tokens: int = 1024,
         **kwargs: Any,
     ) -> LLMResponse:
-        """Call NVIDIA NIM chat completions endpoint with retry policy."""
+        """Call chat completions endpoint with retry policy."""
+        target_model = self._map_model_for_provider(model)
         url = f"{self._base_url}/chat/completions"
         headers = self._get_headers()
         payload = {
-            "model": model,
+            "model": target_model,
             "messages": [{"role": m.role, "content": m.content} for m in messages],
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -89,7 +132,17 @@ class NvidiaNIMProvider(BaseLLMProvider):
                 data = resp.json()
 
                 choice = data["choices"][0]
-                content = choice["message"]["content"]
+                content = choice["message"].get("content") or ""
+                # Fallback to reasoning field if content is empty
+                if not content.strip() and "reasoning" in choice["message"]:
+                    content = choice["message"]["reasoning"]
+
+                # Clean any <think> artifacts if standalone
+                if "<think>" in content and "</think>" in content:
+                    parts = content.split("</think>", 1)
+                    if parts[1].strip():
+                        content = parts[1].strip()
+
                 role = choice["message"].get("role", "assistant")
 
                 usage_data = data.get("usage", {})
@@ -102,8 +155,8 @@ class NvidiaNIMProvider(BaseLLMProvider):
                 return LLMResponse(
                     content=content,
                     role=role,
-                    model=model,
-                    provider="nvidia",
+                    model=target_model,
+                    provider=self.provider_name,
                     usage=usage,
                     latency_ms=round(latency_ms, 2),
                     request_id=data.get("id"),

@@ -39,16 +39,71 @@ class MockLLMProvider(BaseLLMProvider):
         last_msg = messages[-1].content if messages else ""
         lower_prompt = last_msg.lower()
 
-        if "hello" in lower_prompt or "hi" in lower_prompt or "hey" in lower_prompt:
-            reply = "Hello, sir. How may I assist you today?"
-        elif "fast" in lower_prompt or "habit" in lower_prompt:
-            reply = "I have checked your schedule. Your fasting routine is active and up to date."
-        elif "code" in lower_prompt or "python" in lower_prompt or "function" in lower_prompt:
-            reply = "```python\ndef solution():\n    return 'Deterministic code generated.'\n```"
-        elif "plan" in lower_prompt or "goal" in lower_prompt:
-            reply = "Here is the recommended 3-step plan:\n1. Analyze requirements\n2. Execute core logic\n3. Verify results"
+        # Tenglish / Telugu greetings
+        if any(t in lower_prompt for t in ["ela unnaru", "ela unnav", "bagunnara", "namaskaram", "namaste", "meeru ela"]):
+            reply = "Hello sir! Nenu chala bagunnanu, thank you! Meeru ela unnaru? All core telemetry is optimal and I am standing by for your instructions. How may I assist you today, sir?"
+        # Hindi greetings
+        elif any(h in lower_prompt for h in ["kaise ho", "kya haal", "namaste sir", "aap kaise"]):
+            reply = "Namaste sir! Main bilkul theek hoon. Aap kaise hain? All systems are online and ready for your command."
+        # English greetings
+        elif any(g in lower_prompt for g in ["hello", "hi", "hey", "good morning", "good evening", "greetings"]):
+            reply = "Hello, sir. How may I assist you today? All primary subsystems are active and standing by."
+        # Quick affirmations
+        elif lower_prompt.strip() in ["ya", "yeah", "yes", "ok", "okay", "sure", "fine", "cool", "alright"]:
+            reply = "Understood, sir. Subsystems standing by. What task shall we execute next?"
+        elif lower_prompt.strip() in ["what", "who", "who are you", "what can you do", "help", "what is jarvis"]:
+            reply = (
+                "I am J.A.R.V.I.S. (Just A Rather Very Intelligent System), your personal AI operating system.\n\n"
+                "Here are my current core capabilities:\n"
+                "1. **Dynamic Model Routing**: Intelligently dispatching tasks across fast chat, deep reasoning (70B), code generation, and vision models.\n"
+                "2. **Hands-free Voice Input & Output**: Real-time microphone listening and natural speech synthesis.\n"
+                "3. **Task & Schedule Governance**: Habit tracking, fasting schedules, and autonomous multi-step plans.\n"
+                "4. **Policy & Consequential Guardrails**: Human-in-the-loop approval workflows for privileged operations.\n\n"
+                "*Tip: To enable live unconstrained generative AI responses via NVIDIA NIM or Groq, configure your `NVIDIA_API_KEY` or `GROQ_API_KEY` in `backend/.env`.*"
+            )
+        elif any(k in lower_prompt for k in ["diagnostic", "status", "telemetry", "health", "system check"]):
+            reply = (
+                "Telemetry Diagnostics Report:\n"
+                "- Core Processing: ONLINE\n"
+                "- Neural Model Router: ACTIVE (Auto-routing enabled)\n"
+                "- Voice Engine: READY\n"
+                "- Policy Audit Broker: ACTIVE [SHA-256 Hash Chain]\n"
+                "- SQLite Database: HEALTHY"
+            )
+        elif any(k in lower_prompt for k in ["fast", "habit", "routine", "fasting", "workout"]):
+            reply = "Your schedule has been verified. Your intermittent fasting protocol and routine habits are currently tracked and active."
+        elif any(k in lower_prompt for k in ["code", "python", "script", "function", "api test"]):
+            reply = (
+                "Here is an asynchronous Python script demonstrating interaction with the JARVIS API:\n\n"
+                "```python\n"
+                "import asyncio\n"
+                "import httpx\n\n"
+                "async def query_jarvis(prompt: str):\n"
+                "    async with httpx.AsyncClient(base_url='http://localhost:8000') as client:\n"
+                "        resp = await client.post('/api/v1/models/chat', json={\n"
+                "            'messages': [{'role': 'user', 'content': prompt}],\n"
+                "            'role': 'auto'\n"
+                "        })\n"
+                "        print('JARVIS Response:', resp.json().get('content'))\n\n"
+                "if __name__ == '__main__':\n"
+                "    asyncio.run(query_jarvis('Hello J.A.R.V.I.S.'))\n"
+                "```"
+            )
+        elif any(k in lower_prompt for k in ["plan", "goal", "strategy", "architecture", "tradeoff"]):
+            reply = (
+                "Here is the strategic breakdown for your request:\n"
+                "1. **Analysis & Requirement Decomposition**: Isolate constraints and verify dependencies.\n"
+                "2. **Execution & Policy Verification**: Dispatch tasks via the model router while logging cryptographic audit events.\n"
+                "3. **Synthesis & Validation**: Return verified outputs with full telemetry tracking."
+            )
         else:
-            reply = f"Acknowledged: {last_msg}"
+            clean_subject = last_msg.strip(" ?.!").capitalize()
+            reply = (
+                f"Regarding \"{clean_subject}\": I have processed your input through the holographic core.\n\n"
+                "I am currently operating in localized offline mode. For real-time open-domain generative conversations, "
+                "please insert your `NVIDIA_API_KEY` (from https://build.nvidia.com) or `GROQ_API_KEY` into your `backend/.env` file. "
+                "How else may I assist you with your tasks or system controls?"
+            )
 
         prompt_tokens = sum(len(m.content.split()) for m in messages) * 2
         completion_tokens = len(reply.split()) * 2

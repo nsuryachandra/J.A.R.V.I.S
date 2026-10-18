@@ -28,44 +28,66 @@ export const WaveformMonitor: React.FC<WaveformMonitorProps> = ({
       const width = canvas.width;
       const height = canvas.height;
       const centerY = height / 2;
-      const effectiveAmp = isActive ? Math.max(0.25, amplitude) : 0.08;
+      const effectiveAmp = isActive ? Math.max(0.35, amplitude) : 0.08;
+
+      // Draw Grid Matrix Lines
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+      ctx.lineWidth = 1;
+      for (let y = 10; y < height; y += 15) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
 
       // Draw Equalizer Frequency Bars
-      const numBars = 36;
+      const numBars = 48;
       const barWidth = 4;
       const spacing = (width - numBars * barWidth) / (numBars + 1);
 
       for (let i = 0; i < numBars; i++) {
         const x = spacing + i * (barWidth + spacing);
-        const wave = Math.sin(phase + i * 0.25) * 0.5 + 0.5;
-        const barHeight = Math.max(4, wave * height * 0.75 * effectiveAmp);
+        // Multi-frequency wave synthesis
+        const wave1 = Math.sin(phase * 1.8 + i * 0.28) * 0.5 + 0.5;
+        const wave2 = Math.cos(phase * 1.2 + i * 0.15) * 0.3 + 0.3;
+        const combined = (wave1 + wave2) / 2;
+        const barHeight = Math.max(3, combined * height * 0.85 * effectiveAmp);
 
         const gradient = ctx.createLinearGradient(0, centerY - barHeight / 2, 0, centerY + barHeight / 2);
         gradient.addColorStop(0, '#00ffd5');
         gradient.addColorStop(0.5, color);
-        gradient.addColorStop(1, 'rgba(0, 240, 255, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 112, 243, 0.3)');
 
         ctx.fillStyle = gradient;
         ctx.fillRect(x, centerY - barHeight / 2, barWidth, barHeight);
+
+        // Peak tick cap
+        if (isActive) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(x, centerY - barHeight / 2 - 2, barWidth, 1.5);
+        }
       }
 
-      // Draw Center Oscilloscope Sine Wave
+      // Draw Center Oscilloscope Hologram Trace
       ctx.beginPath();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
-      ctx.shadowBlur = 8;
+      ctx.strokeStyle = isActive ? '#ffffff' : color;
+      ctx.lineWidth = isActive ? 2 : 1.2;
+      ctx.shadowBlur = isActive ? 12 : 4;
       ctx.shadowColor = color;
 
-      for (let x = 0; x < width; x += 2) {
-        const y = centerY + Math.sin(x * 0.04 + phase * 2) * (20 * effectiveAmp) * Math.sin(x / width * Math.PI);
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+      for (let x = 0; x < width; x += 3) {
+        const envelope = Math.sin((x / width) * Math.PI);
+        const y =
+          centerY +
+          Math.sin(x * 0.05 + phase * 3) * (24 * effectiveAmp) * envelope +
+          Math.cos(x * 0.02 - phase * 1.5) * (8 * effectiveAmp) * envelope;
+
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
       ctx.stroke();
 
+      ctx.shadowBlur = 0;
       phase += isActive ? 0.08 : 0.02;
       animationFrameId = requestAnimationFrame(render);
     };
@@ -80,43 +102,39 @@ export const WaveformMonitor: React.FC<WaveformMonitorProps> = ({
   return (
     <div
       style={{
+        position: 'relative',
         width: '100%',
-        padding: '8px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
+        height: '75px',
+        background: 'rgba(3, 10, 25, 0.75)',
+        border: '1px solid rgba(0, 240, 255, 0.2)',
+        borderRadius: '6px',
+        overflow: 'hidden',
+        boxShadow: isActive ? '0 0 15px rgba(0, 240, 255, 0.2)' : 'none',
       }}
     >
+      <canvas
+        ref={canvasRef}
+        width={480}
+        height={75}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'block',
+        }}
+      />
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          width: '100%',
-          fontSize: '0.7rem',
+          position: 'absolute',
+          top: '4px',
+          right: '8px',
           fontFamily: 'var(--font-mono)',
-          color: 'var(--cyan-dim)',
+          fontSize: '0.62rem',
+          color: isActive ? '#00ffd5' : 'var(--text-muted)',
           letterSpacing: '0.08em',
         }}
       >
-        <span>VOICE FREQUENCY MONITOR // 44.1 kHz</span>
-        <span style={{ color: isActive ? '#00ffd5' : 'var(--text-muted)' }}>
-          {isActive ? 'SIGNAL DETECTED' : 'STANDBY'}
-        </span>
+        {isActive ? '● 44.1 kHz // SYNTHESIZING AUDIO' : '○ 44.1 kHz // STANDBY'}
       </div>
-      <canvas
-        ref={canvasRef}
-        width={380}
-        height={54}
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          height: '54px',
-          borderRadius: '4px',
-          background: 'rgba(2, 6, 23, 0.7)',
-          border: '1px solid rgba(0, 240, 255, 0.2)',
-        }}
-      />
     </div>
   );
 };

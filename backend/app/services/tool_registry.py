@@ -1083,7 +1083,330 @@ registry.register(
     )
 )
 
+# --- Phase 16 Schemas: Business & Productivity Agents ---
+
+class BusinessResearchLeadToolInput(BaseModel):
+    company_name: str
+    industry: Optional[str] = "Technology"
+    website: Optional[str] = None
+
+class BusinessResearchLeadToolOutput(BaseModel):
+    company_name: str
+    lead_score: int
+    enrichment_summary: str
+
+class BusinessMonitorCompetitorToolInput(BaseModel):
+    name: str
+    website: str
+    market_segment: Optional[str] = "SaaS"
+
+class BusinessMonitorCompetitorToolOutput(BaseModel):
+    name: str
+    threat_level: str
+    strengths_count: int
+    weaknesses_count: int
+
+class BusinessGenerateReportToolInput(BaseModel):
+    title: str
+    report_type: str = "MARKET_ANALYSIS"
+    target_companies: Optional[List[str]] = None
+    key_objectives: Optional[str] = None
+
+class BusinessGenerateReportToolOutput(BaseModel):
+    title: str
+    report_type: str
+    summary: str
+    recommendations_count: int
+
+class BusinessScoreLeadToolInput(BaseModel):
+    company_name: str
+    website: Optional[str] = None
+    contact_email: Optional[str] = None
+    industry: Optional[str] = "Technology"
+
+class BusinessScoreLeadToolOutput(BaseModel):
+    company_name: str
+    fit_score: int
+    qualification_band: str
+
+# 42. SAFE tool: Business Research Lead
+registry.register(
+    ToolDefinition(
+        name="business.research_lead",
+        version="1.0.0",
+        description="Research firmographic profile, web presence, and strategic fit of prospective business lead",
+        risk_class=RiskClass.SAFE,
+        input_schema=BusinessResearchLeadToolInput,
+        output_schema=BusinessResearchLeadToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 43. SAFE tool: Business Monitor Competitor
+registry.register(
+    ToolDefinition(
+        name="business.monitor_competitor",
+        version="1.0.0",
+        description="Analyze competitor positioning, strengths, weaknesses, and market threat levels",
+        risk_class=RiskClass.SAFE,
+        input_schema=BusinessMonitorCompetitorToolInput,
+        output_schema=BusinessMonitorCompetitorToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 44. SAFE tool: Business Generate Report
+registry.register(
+    ToolDefinition(
+        name="business.generate_report",
+        version="1.0.0",
+        description="Compile structured executive business reports, market analyses, and strategic briefs",
+        risk_class=RiskClass.SAFE,
+        input_schema=BusinessGenerateReportToolInput,
+        output_schema=BusinessGenerateReportToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 45. SAFE tool: Business Score Lead
+registry.register(
+    ToolDefinition(
+        name="business.score_lead",
+        version="1.0.0",
+        description="Calculate quantitative qualification fit score based on firmographic and domain signals",
+        risk_class=RiskClass.SAFE,
+        input_schema=BusinessScoreLeadToolInput,
+        output_schema=BusinessScoreLeadToolOutput,
+        requires_approval=False,
+    )
+)
+
+# --- Phase 17 Schemas: Communication & Calls ---
+
+class CommunicationDraftMessageToolInput(BaseModel):
+    channel: str = "EMAIL"
+    recipient: str
+    body: str
+    subject: Optional[str] = None
+
+class CommunicationDraftMessageToolOutput(BaseModel):
+    draft_id: str
+    channel: str
+    recipient: str
+    status: str
+
+class CommunicationSendMessageToolInput(BaseModel):
+    draft_id: str
+    channel: str
+    recipient: str
+
+class CommunicationSendMessageToolOutput(BaseModel):
+    draft_id: str
+    status: str
+    sent_at: Optional[str] = None
+
+class CommunicationPrepareCallToolInput(BaseModel):
+    recipient_phone: str
+    purpose: str
+    briefing_notes: Optional[str] = None
+
+class CommunicationPrepareCallToolOutput(BaseModel):
+    call_id: str
+    recipient_phone: str
+    status: str
+
+class CommunicationInitiateCallToolInput(BaseModel):
+    call_id: str
+    recipient_phone: str
+    purpose: str
+
+class CommunicationInitiateCallToolOutput(BaseModel):
+    call_id: str
+    status: str
+    call_summary: Optional[str] = None
+
+# 46. SAFE tool: Communication Draft Message
+registry.register(
+    ToolDefinition(
+        name="communication.draft_message",
+        version="1.0.0",
+        description="Draft and refine outbound email, SMS, or chat message without sending",
+        risk_class=RiskClass.SAFE,
+        input_schema=CommunicationDraftMessageToolInput,
+        output_schema=CommunicationDraftMessageToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 47. CONSEQUENTIAL tool: Communication Send Message
+registry.register(
+    ToolDefinition(
+        name="communication.send_message",
+        version="1.0.0",
+        description="Dispatch outbound email or SMS message to external recipient with mandatory human approval",
+        risk_class=RiskClass.CONSEQUENTIAL,
+        input_schema=CommunicationSendMessageToolInput,
+        output_schema=CommunicationSendMessageToolOutput,
+        requires_approval=True,
+    )
+)
+
+# 48. SAFE tool: Communication Prepare Call
+registry.register(
+    ToolDefinition(
+        name="communication.prepare_call",
+        version="1.0.0",
+        description="Prepare outbound call briefing agenda and recording consent disclosure dossier",
+        risk_class=RiskClass.SAFE,
+        input_schema=CommunicationPrepareCallToolInput,
+        output_schema=CommunicationPrepareCallToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 49. CONSEQUENTIAL tool: Communication Initiate Call
+registry.register(
+    ToolDefinition(
+        name="communication.initiate_call",
+        version="1.0.0",
+        description="Dial out telephony call to external phone number with mandatory human approval",
+        risk_class=RiskClass.CONSEQUENTIAL,
+        input_schema=CommunicationInitiateCallToolInput,
+        output_schema=CommunicationInitiateCallToolOutput,
+        requires_approval=True,
+    )
+)
+
+# 50. SAFE tool: Commerce Compare Products
+class CommerceCompareProductsToolInput(BaseModel):
+    query: str
+    category: Optional[str] = "General"
+    max_price: Optional[float] = None
+
+class CommerceCompareProductsToolOutput(BaseModel):
+    query: str
+    options_count: int
+    best_value_recommendation: str
+
+registry.register(
+    ToolDefinition(
+        name="commerce.compare_products",
+        version="1.0.0",
+        description="Search, evaluate, and compare product, travel, or service offerings across merchants",
+        risk_class=RiskClass.SAFE,
+        input_schema=CommerceCompareProductsToolInput,
+        output_schema=CommerceCompareProductsToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 51. SAFE tool: Commerce Create Order Draft
+class CommerceCreateOrderDraftToolInput(BaseModel):
+    order_type: str
+    merchant: str
+    title: str
+    total_amount: float
+    currency: str = "USD"
+    idempotency_key: str
+
+class CommerceCreateOrderDraftToolOutput(BaseModel):
+    draft_id: str
+    status: str
+    total_amount: float
+    currency: str
+
+registry.register(
+    ToolDefinition(
+        name="commerce.create_order_draft",
+        version="1.0.0",
+        description="Prepare an itemized shopping cart, travel booking, or service order draft without executing payment",
+        risk_class=RiskClass.SAFE,
+        input_schema=CommerceCreateOrderDraftToolInput,
+        output_schema=CommerceCreateOrderDraftToolOutput,
+        requires_approval=False,
+    )
+)
+
+# 52. CONSEQUENTIAL tool: Commerce Execute Order
+class CommerceExecuteOrderToolInput(BaseModel):
+    order_id: str
+    merchant: str
+    total_amount: float
+    currency: str = "USD"
+    idempotency_key: str
+
+class CommerceExecuteOrderToolOutput(BaseModel):
+    order_id: str
+    status: str
+    transaction_reference: str
+    total_charged: float
+
+registry.register(
+    ToolDefinition(
+        name="commerce.execute_order",
+        version="1.0.0",
+        description="Authorize financial transaction, checkout, or booking execution with mandatory human approval",
+        risk_class=RiskClass.CONSEQUENTIAL,
+        input_schema=CommerceExecuteOrderToolInput,
+        output_schema=CommerceExecuteOrderToolOutput,
+        requires_approval=True,
+        idempotency_required=True,
+    )
+)
+
+# --- Phase 19 Schemas: Background Scheduling & Jobs ---
+
+class JobsTriggerJobToolInput(BaseModel):
+    job_type: str
+    idempotency_key: Optional[str] = None
+    force: bool = False
+
+class JobsTriggerJobToolOutput(BaseModel):
+    job_run_id: str
+    job_type: str
+    status: str
+    duration_ms: Optional[int] = None
+
+class JobsGetStatusToolInput(BaseModel):
+    job_type: Optional[str] = None
+    limit: int = 10
+
+class JobsGetStatusToolOutput(BaseModel):
+    runs_count: int
+    latest_status: Optional[str] = None
+
+# 53. MODERATE tool: Jobs Trigger Job
+registry.register(
+    ToolDefinition(
+        name="jobs.trigger_job",
+        version="1.0.0",
+        description="Trigger background scheduled job (morning briefing, evening summary, consolidation, or tick)",
+        risk_class=RiskClass.MODERATE,
+        input_schema=JobsTriggerJobToolInput,
+        output_schema=JobsTriggerJobToolOutput,
+        moderate_policy=ModeratePolicy(
+            write_operation=True,
+            requires_approval_by_default=False,
+        ),
+        requires_approval=False,
+    )
+)
+
+# 54. SAFE tool: Jobs Get Status
+registry.register(
+    ToolDefinition(
+        name="jobs.get_status",
+        version="1.0.0",
+        description="Inspect background scheduled job execution history, run status, and scheduler health",
+        risk_class=RiskClass.SAFE,
+        input_schema=JobsGetStatusToolInput,
+        output_schema=JobsGetStatusToolOutput,
+        requires_approval=False,
+    )
+)
+
 
 def get_tool_registry() -> ToolRegistry:
     """Return the global tool registry instance."""
     return registry
+

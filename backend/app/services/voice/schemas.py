@@ -10,7 +10,7 @@ class VoiceProfile(BaseModel):
 
     profile_id: str = Field(description="Unique profile identifier, e.g. indian_english_male")
     display_name: str = Field(description="Human-friendly profile name")
-    provider: str = Field(default="elevenlabs", description="TTS provider name")
+    provider: str = Field(default="opensource", description="TTS provider name")
     voice_id: str = Field(description="Provider-specific voice identifier")
     language: str = Field(description="ISO language code, e.g. en, hi, te")
     locale: str = Field(description="Regional locale, e.g. en-IN, hi-IN, te-IN, en-US")
@@ -88,9 +88,9 @@ class VoiceUsageMetrics(BaseModel):
 DEFAULT_VOICE_PROFILES: Dict[str, VoiceProfile] = {
     "indian_english_male": VoiceProfile(
         profile_id="indian_english_male",
-        display_name="Aditya — Indian English Male",
-        provider="elevenlabs",
-        voice_id="XB0fDUnXU5ikFXr333ED",
+        display_name="Naresh — Indian English Male",
+        provider="opensource",
+        voice_id="jfLPtMQebZZmLV8MrMsc",
         language="en",
         locale="en-IN",
         gender="male",
@@ -99,12 +99,12 @@ DEFAULT_VOICE_PROFILES: Dict[str, VoiceProfile] = {
         stability=0.55,
         similarity_boost=0.8,
         style=0.0,
-        description="Warm, polished, professional Indian English male persona.",
+        description="Warm, polished, natural Indian English male persona.",
     ),
     "indian_english_female": VoiceProfile(
         profile_id="indian_english_female",
-        display_name="Kavita — Indian English Female",
-        provider="elevenlabs",
+        display_name="Sarah — Indian / Global English Female",
+        provider="opensource",
         voice_id="EXAVITQu4vr4xnSDxMaL",
         language="en",
         locale="en-IN",
@@ -114,27 +114,27 @@ DEFAULT_VOICE_PROFILES: Dict[str, VoiceProfile] = {
         stability=0.55,
         similarity_boost=0.8,
         style=0.0,
-        description="Clear, articulate, professional Indian English female persona.",
+        description="Clear, articulate, professional English female persona.",
     ),
     "neutral_english_male": VoiceProfile(
         profile_id="neutral_english_male",
-        display_name="Adam — Neutral English Male",
-        provider="elevenlabs",
-        voice_id="pNInz6obpgDQGcFmaJgB",
+        display_name="Daniel — British J.A.R.V.I.S.",
+        provider="opensource",
+        voice_id="onwK4e9ZLuTAKqWW03F9",
         language="en",
-        locale="en-US",
+        locale="en-GB",
         gender="male",
         tone="professional",
         speed=1.0,
         stability=0.5,
         similarity_boost=0.75,
         style=0.0,
-        description="Balanced, neutral international English male voice.",
+        description="Iconic British formal AI voice (Paul Bettany cadence).",
     ),
     "neutral_english_female": VoiceProfile(
         profile_id="neutral_english_female",
         display_name="Rachel — Neutral English Female",
-        provider="elevenlabs",
+        provider="opensource",
         voice_id="21m00Tcm4TlvDq8ikWAM",
         language="en",
         locale="en-US",
@@ -149,7 +149,7 @@ DEFAULT_VOICE_PROFILES: Dict[str, VoiceProfile] = {
     "hindi_male": VoiceProfile(
         profile_id="hindi_male",
         display_name="Aarav — Hindi Male",
-        provider="elevenlabs",
+        provider="opensource",
         voice_id="onwK4e9ZLuTAKqWW03F9",
         language="hi",
         locale="hi-IN",
@@ -164,7 +164,7 @@ DEFAULT_VOICE_PROFILES: Dict[str, VoiceProfile] = {
     "hindi_female": VoiceProfile(
         profile_id="hindi_female",
         display_name="Ananya — Hindi Female",
-        provider="elevenlabs",
+        provider="opensource",
         voice_id="ThT5KcBeYPX3keUQqHPh",
         language="hi",
         locale="hi-IN",
@@ -179,7 +179,7 @@ DEFAULT_VOICE_PROFILES: Dict[str, VoiceProfile] = {
     "telugu_male": VoiceProfile(
         profile_id="telugu_male",
         display_name="Karthik — Telugu Male",
-        provider="elevenlabs",
+        provider="opensource",
         voice_id="TX3LPaxmHKxFdv7VOQHJ",
         language="te",
         locale="te-IN",
@@ -194,7 +194,7 @@ DEFAULT_VOICE_PROFILES: Dict[str, VoiceProfile] = {
     "telugu_female": VoiceProfile(
         profile_id="telugu_female",
         display_name="Lakshmi — Telugu Female",
-        provider="elevenlabs",
+        provider="opensource",
         voice_id="jBpfuIE2acCO8z3wKNLl",
         language="te",
         locale="te-IN",

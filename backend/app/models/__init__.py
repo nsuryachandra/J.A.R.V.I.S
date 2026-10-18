@@ -30,6 +30,21 @@ from app.models.vision import (
     VisionFrame,
     VisionSession,
 )
+from app.models.business import (
+    BusinessLead,
+    BusinessReport,
+    CompetitorProfile,
+)
+from app.models.communication import (
+    CallSession,
+    MessageDraft,
+)
+from app.models.commerce import (
+    OrderDraft,
+)
+from app.models.job import (
+    JobRun,
+)
 
 __all__ = [
     "Base",
@@ -67,4 +82,11 @@ __all__ = [
     "BrowserScreenshot",
     "VisionSession",
     "VisionFrame",
+    "BusinessLead",
+    "CompetitorProfile",
+    "BusinessReport",
+    "MessageDraft",
+    "CallSession",
+    "OrderDraft",
+    "JobRun",
 ]

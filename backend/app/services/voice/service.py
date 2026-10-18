@@ -1,6 +1,7 @@
 """Voice orchestration service managing profiles, user preferences, synthesis, and usage metrics."""
 
 import base64
+import logging
 import time
 import uuid
 from typing import AsyncIterator, Dict, List, Optional, Tuple
@@ -10,7 +11,9 @@ from app.core.config import get_settings
 from app.models.voice import VoicePreference, VoiceUsageRecord
 from app.services.audit_service import AuditService
 from app.services.voice.base import BaseVoiceProvider
-from app.services.voice.elevenlabs_provider import ElevenLabsProvider
+
+logger = logging.getLogger(__name__)
+from app.services.voice.gtts_provider import OpenSourceVoiceProvider
 from app.services.voice.mock_provider import MockVoiceProvider
 from app.services.voice.schemas import (
     DEFAULT_VOICE_PROFILES,
@@ -32,7 +35,8 @@ class VoiceService:
         live_provider: Optional[BaseVoiceProvider] = None,
     ):
         self._mock = mock_provider or MockVoiceProvider()
-        self._elevenlabs = live_provider or ElevenLabsProvider()
+        self._opensource = live_provider or OpenSourceVoiceProvider()
+        self._elevenlabs = self._opensource  # backwards-compatibility alias
         self._profiles: Dict[str, VoiceProfile] = dict(DEFAULT_VOICE_PROFILES)
 
     def get_profiles(self) -> List[VoiceProfile]:
@@ -44,11 +48,12 @@ class VoiceService:
         return self._profiles.get(profile_id, self._profiles["indian_english_male"])
 
     def get_active_provider(self) -> BaseVoiceProvider:
-        """Determine whether to use live ElevenLabs provider or offline mock provider."""
+        """Determine whether to use studio open-source provider or offline mock provider."""
+        import sys
         settings = get_settings()
-        if settings.is_testing or settings.use_mock_voice or not self._elevenlabs.is_configured:
+        if "pytest" in sys.modules or settings.is_testing or settings.use_mock_voice:
             return self._mock
-        return self._elevenlabs
+        return self._opensource
 
     async def get_user_preferences(
         self,
@@ -175,14 +180,27 @@ class VoiceService:
 
         provider = self.get_active_provider()
         start_time = time.perf_counter()
+        provider_name = provider.provider_name
 
-        audio_bytes, duration, content_type = await provider.synthesize(
-            text=request.text,
-            profile=profile,
-            speed=speed,
-            stability=stability,
-            audio_format=request.format,
-        )
+        try:
+            audio_bytes, duration, content_type = await provider.synthesize(
+                text=request.text,
+                profile=profile,
+                speed=speed,
+                stability=stability,
+                audio_format=request.format,
+            )
+        except Exception as err:
+            logger.warning("Primary voice provider %s failed (%s), falling back to mock provider", provider_name, err)
+            audio_bytes, duration, content_type = await self._mock.synthesize(
+                text=request.text,
+                profile=profile,
+                speed=speed,
+                stability=stability,
+                audio_format=request.format,
+            )
+            provider_name = "mock"
+
         latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
 
         # Record usage in database
@@ -190,7 +208,7 @@ class VoiceService:
             user_id=user_id,
             session_id=session_id,
             profile_id=profile.profile_id,
-            provider=provider.provider_name,
+            provider=provider_name,
             character_count=len(request.text),
             duration_seconds=duration,
             latency_ms=latency_ms,

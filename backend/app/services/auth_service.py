@@ -54,7 +54,10 @@ class AuthService:
             is_active=True,
         )
         session.add(user)
-        await session.flush()
+        try:
+            await session.flush()
+        except IntegrityError:
+            raise AuthenticationError("A user with this email address already exists")
 
         profile = UserProfile(
             user_id=user.id,
